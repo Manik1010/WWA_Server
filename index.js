@@ -31,7 +31,13 @@ async function run() {
     // await client.connect();
 
     const userCollection = client.db("wwaDB").collection("users");
+    const coursesCollection = client.db("wwaDB").collection("courses");
 
+    // Langouses Courses related apis
+    app.get('/courses', async (req, res) => {
+      const result = await coursesCollection.find().toArray();
+      res.send(result);
+    })
 
 
 
