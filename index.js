@@ -3,6 +3,7 @@ const app = express()
 const cors = require('cors');
 require('dotenv').config()
 const port = process.env.PORT || 5000
+const { ObjectId } = require('mongodb');
 
 
 // middleware.....
@@ -43,7 +44,7 @@ async function run() {
 
     app.post('/users', async (req, res) => {
       const user = req.body;
-      console.log(user);
+      // console.log(user);
       const query = { email: user.email }
       const existingUser = await userCollection.findOne(query);
 
@@ -55,6 +56,22 @@ async function run() {
       res.send(result);
     })
 
+
+    // Admin Panel API................................. 
+    app.patch('/users/admin/:id', async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: 'Admin'
+        },
+      };
+
+      const result = await userCollection.updateOne(filter, updateDoc);
+      res.send(result);
+
+    })
 
 
 
