@@ -33,14 +33,20 @@ async function run() {
     const userCollection = client.db("wwaDB").collection("users");
     const coursesCollection = client.db("wwaDB").collection("courses");
     const instructorsCollection = client.db("wwaDB").collection("instructors");
-
+    
 
     // Langouses Courses related apis............................
     app.get('/courses', async (req, res) => {
       const result = await coursesCollection.find().toArray();
       res.send(result);
     })
- 
+    app.post('/courses', async(req, res) =>{
+      const newItem = req.body;
+      console.log(newItem)
+      const result = await coursesCollection.insertOne(newItem)
+      res.send(result);
+    })
+
 
     //Course Instructors related apis................................
     app.get('/instructors', async (req, res) => {
@@ -57,6 +63,13 @@ async function run() {
       const result = await userCollection.find().toArray();
       res.send(result);
     });
+
+    app.get('/users/:id', async(req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const user = await userCollection.findOne(query);
+      res.send(user);
+  })
 
     app.post('/users', async (req, res) => {
       const user = req.body;
