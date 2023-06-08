@@ -33,22 +33,40 @@ async function run() {
     const userCollection = client.db("wwaDB").collection("users");
     const coursesCollection = client.db("wwaDB").collection("courses");
     const instructorsCollection = client.db("wwaDB").collection("instructors");
-    
+    const bookingCollection = client.db("wwaDB").collection("bookings");
+
 
     // Langouses Courses related apis............................
     app.get('/courses', async (req, res) => {
       const result = await coursesCollection.find().toArray();
       res.send(result);
     })
-    app.post('/courses', async(req, res) =>{
+    app.post('/courses', async (req, res) => {
       const newItem = req.body;
       console.log(newItem)
       const result = await coursesCollection.insertOne(newItem)
       res.send(result);
     })
+    app.get('/bookings', async (req, res) => {
+      const email = req.query.email;
+      // console.log(email)
+      if (!email) {
+        res.send([]);
+      }
+      const query = { bookerEmail: email }
+      const result = await bookingCollection.find(query).toArray();
+      res.send(result);
+    })
+    app.post('/bookings', async (req, res) => {
+      const item = req.body;
+      // console.log(item);
+      const result = await bookingCollection.insertOne(item);
+      res.send(result);
+    })
 
 
     //Course Instructors related apis................................
+
     app.get('/instructors', async (req, res) => {
       const result = await instructorsCollection.find().toArray();
       res.send(result);
@@ -64,12 +82,12 @@ async function run() {
       res.send(result);
     });
 
-    app.get('/users/:id', async(req, res) => {
+    app.get('/users/:id', async (req, res) => {
       const id = req.params.id;
-      const query = {_id: new ObjectId(id)}
+      const query = { _id: new ObjectId(id) }
       const user = await userCollection.findOne(query);
       res.send(user);
-  })
+    })
 
     app.post('/users', async (req, res) => {
       const user = req.body;
@@ -86,7 +104,7 @@ async function run() {
     })
 
 
-    // Admin Panel API................................. 
+    // Admin Panel API................................. ................. 
     app.patch('/users/admin/:id', async (req, res) => {
       const id = req.params.id;
       // console.log(id);
@@ -116,6 +134,9 @@ async function run() {
       res.send(result);
 
     })
+
+   
+
 
 
 
