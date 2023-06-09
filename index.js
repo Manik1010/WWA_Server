@@ -4,7 +4,7 @@ const cors = require('cors');
 require('dotenv').config()
 const port = process.env.PORT || 5000
 const { ObjectId } = require('mongodb');
-
+const stripe = require('stripe')(process.env.PAYMENT_SECRET_KEY);
 
 // middleware.....
 app.use(cors());
@@ -34,11 +34,22 @@ async function run() {
     const coursesCollection = client.db("wwaDB").collection("courses");
     const instructorsCollection = client.db("wwaDB").collection("instructors");
     const bookingCollection = client.db("wwaDB").collection("bookings");
+    const paymentCollection = client.db("wwaDB").collection("payments");
 
 
     // Langouses Courses related apis............................
     app.get('/courses', async (req, res) => {
       const result = await coursesCollection.find().toArray();
+      res.send(result);
+    })
+    app.get('/courses', async (req, res) => {
+      const email = req.query.email;
+      console.log(email)
+      // if (!email) {
+      //   res.send([]);
+      // }
+      const query = { email: email }
+      const result = await coursesCollection.find(query).toArray();
       res.send(result);
     })
     app.post('/courses', async (req, res) => {
@@ -63,98 +74,145 @@ async function run() {
       const result = await bookingCollection.insertOne(item);
       res.send(result);
     })
-
-
-    //Course Instructors related apis................................
-
-    app.get('/instructors', async (req, res) => {
-      const result = await instructorsCollection.find().toArray();
-      res.send(result);
-    })
-
-
-
-
-    // users related apis..........................................
-
-    app.get('/users', async (req, res) => {
-      const result = await userCollection.find().toArray();
-      res.send(result);
-    });
-
-    app.get('/users/:id', async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: new ObjectId(id) }
-      const user = await userCollection.findOne(query);
-      res.send(user);
-    })
-
-    app.post('/users', async (req, res) => {
-      const user = req.body;
-      // console.log(user);
-      const query = { email: user.email }
-      const existingUser = await userCollection.findOne(query);
-
-      if (existingUser) {
-        return res.send({ message: 'User already exists' })
+    app.get('/payments', async (req, res) => {
+      const email = req.query.email;
+      console.log(email)
+      if (!email) {
+        res.send([]);
       }
-
-      const result = await userCollection.insertOne(user);
+      const query = { email: email }
+      const result = await paymentCollection.find(query).toArray();
       res.send(result);
+    })
+    // create payment intent
+    app.post('/create-payment-intent', async (req, res) => {
+      const { price } = req.body;
+      const amount = price * 100
+      console.log(amount)
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: 'usd',
+        payment_method_types: ['card']
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret
+      })
+    })
+    // payment related api
+    app.post('/payments', async (req, res) => {
+      const payment = req.body;
+      const insertResult = await paymentCollection.insertOne(payment);
+
+      const query = { _id: { $in: payment.bookingItems.map(id => new ObjectId(id)) } }
+      const deleteResult = await bookingCollection.deleteMany(query)
+
+      res.send({ insertResult, deleteResult });
+      // res.send(insertResult)
     })
 
 
-    // Admin Panel API................................. ................. 
-    app.patch('/users/admin/:id', async (req, res) => {
-      const id = req.params.id;
-      // console.log(id);
-      const filter = { _id: new ObjectId(id) };
-      const updateDoc = {
-        $set: {
-          role: 'Admin'
-        },
-      };
 
-      const result = await userCollection.updateOne(filter, updateDoc);
-      res.send(result);
 
-    })
+      // Instructors related apis................................
 
-    app.patch('/users/instructor/:id', async (req, res) => {
-      const id = req.params.id;
-      // console.log(id);
-      const filter = { _id: new ObjectId(id) };
-      const updateDoc = {
-        $set: {
-          role: 'Instructor'
-        },
-      };
-
-      const result = await userCollection.updateOne(filter, updateDoc);
-      res.send(result);
-
-    })
-
-   
+      app.get('/instructors', async (req, res) => {
+        const result = await instructorsCollection.find().toArray();
+        res.send(result);
+      })
 
 
 
 
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-    // await client.close();
+      // users related apis..........................................
+
+      app.get('/users', async (req, res) => {
+        const result = await userCollection.find().toArray();
+        res.send(result);
+      });
+
+      app.get('/users/:id', async (req, res) => {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) }
+        const user = await userCollection.findOne(query);
+        res.send(user);
+      })
+
+      app.post('/users', async (req, res) => {
+        const user = req.body;
+        // console.log(user);
+        const query = { email: user.email }
+        const existingUser = await userCollection.findOne(query);
+
+        if (existingUser) {
+          return res.send({ message: 'User already exists' })
+        }
+
+        const result = await userCollection.insertOne(user);
+        res.send(result);
+      })
+
+
+      // Admin Panel API................................. ................. 
+      app.patch('/users/admin/:id', async (req, res) => {
+        const id = req.params.id;
+        // console.log(id);
+        const filter = { _id: new ObjectId(id) };
+        const updateDoc = {
+          $set: {
+            role: 'Admin'
+          },
+        };
+
+        const result = await userCollection.updateOne(filter, updateDoc);
+        res.send(result);
+
+      })
+
+      app.patch('/users/instructor/:id', async (req, res) => {
+        const id = req.params.id;
+        // console.log(id);
+        const filter = { _id: new ObjectId(id) };
+        const updateDoc = {
+          $set: {
+            role: 'Instructor'
+          },
+        };
+
+        const result = await userCollection.updateOne(filter, updateDoc);
+        res.send(result);
+
+      })
+
+      //All Delete API is here................................. ................. 
+
+      app.delete('/bookings/:id', async (req, res) => {
+        const id = req.params.id;
+        // console.log(id);
+        const query = { _id: new ObjectId(id) }
+        // console.log(query)
+        const result = await bookingCollection.deleteOne(query);
+        // console.log(result)
+        res.send(result)
+      })
+
+
+
+
+      // Send a ping to confirm a successful connection
+      await client.db("admin").command({ ping: 1 });
+      console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    } finally {
+      // Ensures that the client will close when you finish/error
+      // await client.close();
+    }
   }
-}
 run().catch(console.dir);
 
 
-app.get('/', (req, res) => {
-  res.send('Hello form WWA Project Service')
-})
+  app.get('/', (req, res) => {
+    res.send('Hello form WWA Project Service')
+  })
 
-app.listen(port, () => {
-  console.log(`The website API is runing For  WWA Project Service: ${port}`)
-})
+  app.listen(port, () => {
+    console.log(`The website API is runing For  WWA Project Service: ${port}`)
+  })
