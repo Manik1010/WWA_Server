@@ -43,20 +43,54 @@ async function run() {
       res.send(result);
     })
     app.get('/courses', async (req, res) => {
+      const id = req.query.id;
+      console.log(id)
+      // const email = req.query.email;
+      // if (id) {
+      //   const query = { _id: id }
+      //   const result = await coursesCollection.find(query).toArray();
+      //   res.send(result);
+      // }
+      // if (email) {
+      //   const query = { email: email }
+      //   const result = await coursesCollection.find(query).toArray();
+      //   res.send(result);
+      // }
+
+      const query = { _id: id }
+      const result = await coursesCollection.find(query).toArray();
+      res.send(result);
+
+    })
+    app.get('/courses', async (req, res) => {
       const email = req.query.email;
       console.log(email)
-      // if (!email) {
-      //   res.send([]);
-      // }
+      if (!email) {
+        res.send([]);
+      }
       const query = { email: email }
       const result = await coursesCollection.find(query).toArray();
       res.send(result);
     })
     app.post('/courses', async (req, res) => {
       const newItem = req.body;
-      console.log(newItem)
+      // console.log(newItem)
       const result = await coursesCollection.insertOne(newItem)
       res.send(result);
+    })
+    app.patch('/courses/admin/:id', async (req, res) => {
+      const id = req.params.id;
+      // console.log(id);
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: 'Approved'
+        },
+      };
+
+      const result = await coursesCollection.updateOne(filter, updateDoc);
+      res.send(result);
+
     })
     app.get('/bookings', async (req, res) => {
       const email = req.query.email;
@@ -76,7 +110,7 @@ async function run() {
     })
     app.get('/payments', async (req, res) => {
       const email = req.query.email;
-      console.log(email)
+      // console.log(email)
       if (!email) {
         res.send([]);
       }
@@ -88,7 +122,7 @@ async function run() {
     app.post('/create-payment-intent', async (req, res) => {
       const { price } = req.body;
       const amount = price * 100
-      console.log(amount)
+      // console.log(amount)
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amount,
         currency: 'usd',
@@ -113,106 +147,124 @@ async function run() {
 
 
 
-      // Instructors related apis................................
+    // Instructors related apis................................
 
-      app.get('/instructors', async (req, res) => {
-        const result = await instructorsCollection.find().toArray();
-        res.send(result);
-      })
-
-
-
-
-      // users related apis..........................................
-
-      app.get('/users', async (req, res) => {
-        const result = await userCollection.find().toArray();
-        res.send(result);
-      });
-
-      app.get('/users/:id', async (req, res) => {
-        const id = req.params.id;
-        const query = { _id: new ObjectId(id) }
-        const user = await userCollection.findOne(query);
-        res.send(user);
-      })
-
-      app.post('/users', async (req, res) => {
-        const user = req.body;
-        // console.log(user);
-        const query = { email: user.email }
-        const existingUser = await userCollection.findOne(query);
-
-        if (existingUser) {
-          return res.send({ message: 'User already exists' })
-        }
-
-        const result = await userCollection.insertOne(user);
-        res.send(result);
-      })
-
-
-      // Admin Panel API................................. ................. 
-      app.patch('/users/admin/:id', async (req, res) => {
-        const id = req.params.id;
-        // console.log(id);
-        const filter = { _id: new ObjectId(id) };
-        const updateDoc = {
-          $set: {
-            role: 'Admin'
-          },
-        };
-
-        const result = await userCollection.updateOne(filter, updateDoc);
-        res.send(result);
-
-      })
-
-      app.patch('/users/instructor/:id', async (req, res) => {
-        const id = req.params.id;
-        // console.log(id);
-        const filter = { _id: new ObjectId(id) };
-        const updateDoc = {
-          $set: {
-            role: 'Instructor'
-          },
-        };
-
-        const result = await userCollection.updateOne(filter, updateDoc);
-        res.send(result);
-
-      })
-
-      //All Delete API is here................................. ................. 
-
-      app.delete('/bookings/:id', async (req, res) => {
-        const id = req.params.id;
-        // console.log(id);
-        const query = { _id: new ObjectId(id) }
-        // console.log(query)
-        const result = await bookingCollection.deleteOne(query);
-        // console.log(result)
-        res.send(result)
-      })
+    app.get('/instructors', async (req, res) => {
+      const result = await instructorsCollection.find().toArray();
+      res.send(result);
+    })
 
 
 
 
-      // Send a ping to confirm a successful connection
-      await client.db("admin").command({ ping: 1 });
-      console.log("Pinged your deployment. You successfully connected to MongoDB!");
-    } finally {
-      // Ensures that the client will close when you finish/error
-      // await client.close();
-    }
+    // users related apis..........................................
+
+    app.get('/users', async (req, res) => {
+      const result = await userCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.get('/users/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const user = await userCollection.findOne(query);
+      res.send(user);
+    })
+
+    app.post('/users', async (req, res) => {
+      const user = req.body;
+      // console.log(user);
+      const query = { email: user.email }
+      const existingUser = await userCollection.findOne(query);
+
+      if (existingUser) {
+        return res.send({ message: 'User already exists' })
+      }
+
+      const result = await userCollection.insertOne(user);
+      res.send(result);
+    })
+
+
+    // Admin Panel API................................. ................. 
+    app.patch('/users/admin/:id', async (req, res) => {
+      const id = req.params.id;
+      // console.log(id);
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: 'Admin'
+        },
+      };
+
+      const result = await userCollection.updateOne(filter, updateDoc);
+      res.send(result);
+
+    })
+
+    app.patch('/users/instructor/:id', async (req, res) => {
+      const id = req.params.id;
+      // console.log(id);
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: 'Instructor'
+        },
+      };
+
+      const result = await userCollection.updateOne(filter, updateDoc);
+      res.send(result);
+
+    })
+
+
+
+    //All Delete API is here................................. ................. 
+    
+    app.delete('/users/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+
+      const result = await userCollection.deleteOne(query);
+      res.send(result)
+    })
+
+    app.delete('/bookings/:id', async (req, res) => {
+      const id = req.params.id;
+      // console.log(id);
+      const query = { _id: new ObjectId(id) }
+      // console.log(query)
+      const result = await bookingCollection.deleteOne(query);
+      // console.log(result)
+      res.send(result)
+    })
+
+    app.delete('/courses/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+
+      const result = await coursesCollection.deleteOne(query);
+      res.send(result)
+    })
+
+
+
+
+    // Send a ping to confirm a successful connection
+    await client.db("admin").command({ ping: 1 });
+    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+  } finally {
+    // Ensures that the client will close when you finish/error
+    // await client.close();
   }
+}
 run().catch(console.dir);
 
 
-  app.get('/', (req, res) => {
-    res.send('Hello form WWA Project Service')
-  })
+app.get('/', (req, res) => {
+  res.send('Hello form WWA Project Service')
+})
 
-  app.listen(port, () => {
-    console.log(`The website API is runing For  WWA Project Service: ${port}`)
-  })
+app.listen(port, () => {
+  console.log(`The website API is runing For  WWA Project Service: ${port}`)
+})
