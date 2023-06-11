@@ -67,7 +67,7 @@ async function run() {
     app.get('/courses', async (req, res) => {
       const email = req.query.email;
       // const id = req.query.id;
-      if(email){
+      if (email) {
         const query = { email: email }
         const result = await coursesCollection.find(query).toArray();
         res.send(result);
@@ -77,20 +77,20 @@ async function run() {
       //   const result = await coursesCollection.find(query).toArray();
       //   res.send(result);
       // }
-      else{
+      else {
         // const result = await coursesCollection.find().toArray();
-      const result = await coursesCollection.find().sort({ available_set: 1 }).limit(6).toArray();
-      res.send(result);
+        const result = await coursesCollection.find().sort({ available_set: 1 }).limit(6).toArray();
+        res.send(result);
       }
-      
+
     })
     app.get('/courses/:id', async (req, res) => {
       const id = req.params.id;
-      const quary = {_id: new ObjectId(id)}
+      const quary = { _id: new ObjectId(id) }
       // console.log(id);
-      const selectedToy = await coursesCollection.findOne(quary);
-      res.send(selectedToy);
-  })
+      const selectedCoures = await coursesCollection.findOne(quary);
+      res.send(selectedCoures);
+    })
     // app.get('/courses', async (req, res) => {
     //   const id = req.query.id;
     //   console.log(id)
@@ -143,19 +143,20 @@ async function run() {
       const filter = { _id: new ObjectId(id) }
       const options = { upsert: true }
       const updatedCourse = {
-          $set: {
-              name: data.name,
-              disp: data.disp,
-              instroctor: data.instroctor,
-              price: data.price,
-              set: data.set,
-              email: data.email          }
+        $set: {
+          name: data.name,
+          disp: data.disp,
+          instroctor: data.instroctor,
+          price: data.price,
+          set: data.set,
+          email: data.email
+        }
       }
 
       const result = await coursesCollection.updateOne(filter, updatedCourse, options);
       res.send(result);
 
-  })
+    })
 
     app.patch('/courses/admin/:id', async (req, res) => {
       const id = req.params.id;
@@ -173,14 +174,39 @@ async function run() {
     })
     app.get('/bookings', async (req, res) => {
       const email = req.query.email;
-      // console.log(email)
-      if (!email) {
-        res.send([]);
+      const id = req.query.id;
+      console.log(id)
+      if (email) {
+        const query = { bookerEmail: email }
+        const result = await bookingCollection.find(query).toArray();
+        res.send(result);
       }
-      const query = { bookerEmail: email }
-      const result = await bookingCollection.find(query).toArray();
-      res.send(result);
+      else if (id) {
+        const query = { _id: id }
+        // const result = await bookingCollection.find(query).toArray();
+        // console.log(query)
+        // res.send(result);
+        try {
+          const result = await bookingCollection.find(query).toArray();
+          // console.log(result);
+          res.send(result);
+        } catch (error) {
+          // console.log(error);
+          // Handle the error accordingly
+        }
+      }
+
     })
+    // app.get('/bookings', async (req, res) => {
+    //   const email = req.query.email;
+    //   // console.log(email)
+    //   if (!email) {
+    //     res.send([]);
+    //   }
+    //   const query = { bookerEmail: email }
+    //   const result = await bookingCollection.find(query).toArray();
+    //   res.send(result);
+    // })
     app.post('/bookings', async (req, res) => {
       const item = req.body;
       // console.log(item);
@@ -301,6 +327,24 @@ async function run() {
     //   const result = { admin: user?.role === 'admin' }
     //   res.send(result);
     // })
+    // Define the route to handle the PATCH request
+    app.patch('/users/:id', async (req, res) => {
+      const { id } = req.params;
+      const { role } = req.body;
+      // console.log(id, role)
+
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: role
+        },
+      };
+
+      const result = await userCollection.updateOne(filter, updateDoc);
+      res.send(result);
+   
+    });
+
 
     app.patch('/users/admin/:id', async (req, res) => {
       const id = req.params.id;
