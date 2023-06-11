@@ -65,52 +65,98 @@ async function run() {
 
     // Langouses Courses related apis............................
     app.get('/courses', async (req, res) => {
-      const result = await coursesCollection.find().toArray();
-      res.send(result);
-    })
-    app.get('/courses', async (req, res) => {
-      const id = req.query.id;
-      console.log(id)
-      // const email = req.query.email;
-      // if (id) {
+      const email = req.query.email;
+      // const id = req.query.id;
+      if(email){
+        const query = { email: email }
+        const result = await coursesCollection.find(query).toArray();
+        res.send(result);
+      }
+      // else if(id){
       //   const query = { _id: id }
       //   const result = await coursesCollection.find(query).toArray();
       //   res.send(result);
       // }
-      // if (email) {
-      //   const query = { email: email }
-      //   const result = await coursesCollection.find(query).toArray();
-      //   res.send(result);
-      // }
-
-      const query = { _id: id }
-      const result = await coursesCollection.find(query).toArray();
+      else{
+        // const result = await coursesCollection.find().toArray();
+      const result = await coursesCollection.find().sort({ available_set: 1 }).limit(6).toArray();
       res.send(result);
-
-    })
-    app.get('/courses', verifyJWT, async (req, res) => {
-      const email = req.query.email;
-      console.log(email)
-      if (!email) {
-        res.send([]);
       }
-
-      // verify...
-      const decodedEmail = req.decoded.email
-      if(email !== decodedEmail){
-        return res.status(403).send({ error: true, message: 'Porviden access' })
-      }
-
-      const query = { email: email }
-      const result = await coursesCollection.find(query).toArray();
-      res.send(result);
+      
     })
+    app.get('/courses/:id', async (req, res) => {
+      const id = req.params.id;
+      const quary = {_id: new ObjectId(id)}
+      // console.log(id);
+      const selectedToy = await coursesCollection.findOne(quary);
+      res.send(selectedToy);
+  })
+    // app.get('/courses', async (req, res) => {
+    //   const id = req.query.id;
+    //   console.log(id)
+    //   // const email = req.query.email;
+    //   // if (id) {
+    //   //   const query = { _id: id }
+    //   //   const result = await coursesCollection.find(query).toArray();
+    //   //   res.send(result);
+    //   // }
+    //   // if (email) {
+    //   //   const query = { email: email }
+    //   //   const result = await coursesCollection.find(query).toArray();
+    //   //   res.send(result);
+    //   // }
+
+    //   const query = { _id: id }
+    //   const result = await coursesCollection.find(query).toArray();
+    //   res.send(result);
+
+    // })
+    // app.get('/courses', verifyJWT, async (req, res) => {
+    //   const email = req.query.email;
+    //   // console.log(email)
+    //   if (!email) {
+    //     res.send([]);
+    //   }
+
+    //   // verify...
+    //   const decodedEmail = req.decoded.email
+    //   if (email !== decodedEmail) {
+    //     return res.status(403).send({ error: true, message: 'Porviden access' })
+    //   }
+
+    //   const query = { email: email }
+    //   const result = await coursesCollection.find(query).toArray();
+    //   res.send(result);
+    // })
     app.post('/courses', async (req, res) => {
       const newItem = req.body;
       // console.log(newItem)
       const result = await coursesCollection.insertOne(newItem)
       res.send(result);
     })
+
+    app.put('/updateCourse/:id', async (req, res) => {
+      const id = req.params.id;
+      const data = req.body;
+      // console.log(data);
+
+      const filter = { _id: new ObjectId(id) }
+      const options = { upsert: true }
+      const updatedCourse = {
+          $set: {
+              name: data.name,
+              disp: data.disp,
+              instroctor: data.instroctor,
+              price: data.price,
+              set: data.set,
+              email: data.email          }
+      }
+
+      const result = await coursesCollection.updateOne(filter, updatedCourse, options);
+      res.send(result);
+
+  })
+
     app.patch('/courses/admin/:id', async (req, res) => {
       const id = req.params.id;
       // console.log(id);
@@ -183,7 +229,8 @@ async function run() {
     // Instructors related apis................................
 
     app.get('/instructors', async (req, res) => {
-      const result = await instructorsCollection.find().toArray();
+      // const result = await instructorsCollection.find().toArray();
+      const result = await instructorsCollection.find().sort({ studentNumber: -1 }).limit(6).toArray();
       res.send(result);
     })
 
@@ -193,8 +240,16 @@ async function run() {
     // users related apis..........................................
 
     app.get('/users', async (req, res) => {
-      const result = await userCollection.find().toArray();
-      res.send(result);
+      const email = req.query.email;
+      if (email) {
+        const query = { email: email }
+        const result = await userCollection.find(query).toArray();
+        res.send(result);
+      } else {
+        const result = await userCollection.find().toArray();
+        res.send(result);
+      }
+
     });
 
     app.get('/users/:id', async (req, res) => {
@@ -204,23 +259,48 @@ async function run() {
       res.send(user);
     })
 
-    app.post('/users', async (req, res) => {
-      const user = req.body;
-      // console.log(user);
-      const query = { email: user.email }
-      const existingUser = await userCollection.findOne(query);
+    // app.post('/users', async (req, res) => {
+    //   const user = req.body;
+    //   // console.log(user);
+    //   const query = { email: user.email }
+    //   const existingUser = await userCollection.findOne(query);
 
-      if (existingUser) {
-        return res.send({ message: 'User already exists' })
-      }
+    //   if (existingUser) {
+    //     return res.send({ message: 'User already exists' })
+    //   }
 
-      const result = await userCollection.insertOne(user);
-      res.send(result);
-    })
+    //   const result = await userCollection.insertOne(user);
+    //   res.send(result);
+    // })
+    // app.get('/users', async (req, res) => {
+    //   const email = req.query.email;
+    //   console.log(email)
+    //   if (!email) {
+    //     res.send([]);
+    //   }
 
+    //   const query = { email: email }
+    //   const result = await userCollection.find(query).toArray();
+    //   res.send(result);
+    // })
 
     // Admin Panel API................................. ................. 
 
+    // security layer: verifyJWT
+    // email same
+    // check admin
+    // app.get('/users/admin/:email', verifyJWT, async (req, res) => {
+    //   const email = req.params.email;
+
+    //   if (req.decoded.email !== email) {
+    //     res.send({ admin: false })
+    //   }
+
+    //   const query = { email: email }
+    //   const user = await userCollection.findOne(query);
+    //   const result = { admin: user?.role === 'admin' }
+    //   res.send(result);
+    // })
 
     app.patch('/users/admin/:id', async (req, res) => {
       const id = req.params.id;
@@ -255,7 +335,7 @@ async function run() {
 
 
     //All Delete API is here................................. ................. 
-    
+
     app.delete('/users/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) }
