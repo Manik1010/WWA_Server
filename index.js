@@ -72,16 +72,24 @@ async function run() {
         const result = await coursesCollection.find(query).toArray();
         res.send(result);
       }
-      // else if(id){
-      //   const query = { _id: id }
-      //   const result = await coursesCollection.find(query).toArray();
-      //   res.send(result);
-      // }
       else {
         // const result = await coursesCollection.find().toArray();
-        const result = await coursesCollection.find().sort({ available_set: 1 }).limit(6).toArray();
+        const result = await coursesCollection.find({ status: "Approved" }).toArray();
         res.send(result);
       }
+
+    })
+    app.get('/courses/admin', async (req, res) => {
+
+        // const result = await coursesCollection.find().toArray();
+        const result = await coursesCollection.find().toArray();
+        res.send(result);
+
+    })
+    app.get('/courses/card', async (req, res) => {
+
+        const result = await coursesCollection.find().sort({ available_set: 1 }).limit(6).toArray();
+        res.send(result);
 
     })
     app.get('/course/:id', async (req, res) => {
@@ -175,28 +183,26 @@ async function run() {
     app.get('/bookings', async (req, res) => {
       const email = req.query.email;
       const id = req.query.id;
-      console.log(id)
-      if (email) {
-        const query = { bookerEmail: email }
-        const result = await bookingCollection.find(query).toArray();
-        res.send(result);
-      }
-      else if (id) {
-        const query = { _id: id }
-        // const result = await bookingCollection.find(query).toArray();
-        // console.log(query)
-        // res.send(result);
-        try {
+      // console.log(id);
+    
+      try {
+        if (email) {
+          const query = { bookerEmail: email };
           const result = await bookingCollection.find(query).toArray();
-          // console.log(result);
           res.send(result);
-        } catch (error) {
-          // console.log(error);
-          // Handle the error accordingly
+        } else if (id) {
+          const query = { email: email }
+          // const query = { _id: new ObjectId(id) };
+          const result = await bookingCollection.find(query).toArray();
+          res.send(result);
+        } else {
+          res.status(400).json({ error: 'Invalid request' });
         }
+      } catch (error) {
+        console.error('Error occurred:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
       }
-
-    })
+    });
     // app.get('/bookings', async (req, res) => {
     //   const email = req.query.email;
     //   // console.log(email)
@@ -207,6 +213,15 @@ async function run() {
     //   const result = await bookingCollection.find(query).toArray();
     //   res.send(result);
     // })
+
+    // app.get('/bookings/:id', async (req, res) => {
+    //   const id = req.params.id;
+    //   const quary = { _id: new ObjectId(id) }
+    //   console.log(id);
+    //   const selectedCoures = await bookingCollection.findOne(quary);
+    //   res.send(selectedCoures);
+    // })
+    
     app.post('/bookings', async (req, res) => {
       const item = req.body;
       // console.log(item);
@@ -250,13 +265,54 @@ async function run() {
     })
 
 
+    // app.post('/payments', verifyJWT, async (req, res) => {
+    //   const payment = req.body;
+    //   const insertResult = await paymentCollection.insertOne(payment);
 
+    //   const query = { _id: new ObjectId(payment.selectedClassId) };
+    //   const deleteResult = await selectedclassCollection.deleteOne(query);
+
+    //   const filter = { _id: new ObjectId(payment.classId) };
+    //   const classDoc = await classCollection.findOne(filter);
+
+    //   if (!classDoc) {
+    //     res.status(404).send('Class not found');
+    //     return;
+    //   }
+
+    //   const seats = classDoc.seats;
+    //   const totalEnrolled = classDoc.totalEnrolled;
+
+    //   if (seats <= 0) {
+    //     res.status(400).send('No available seats');
+    //     return;
+    //   }
+
+    //   const updatedSeats = seats - 1;
+    //   const updatedTotalEnrolled = totalEnrolled + 1;
+
+    //   const updatedDoc = {
+    //     $set: {
+    //       seats: updatedSeats,
+    //       totalEnrolled: updatedTotalEnrolled
+    //     }
+    //   };
+
+    //   const updateResult = await classCollection.updateOne(filter, updatedDoc);
+
+    //   res.send({ insertResult, deleteResult, updateResult });
+    // });
 
     // Instructors related apis................................
 
-    app.get('/instructors', async (req, res) => {
+    app.get('/instructors/card', async (req, res) => {
       // const result = await instructorsCollection.find().toArray();
       const result = await instructorsCollection.find().sort({ studentNumber: -1 }).limit(6).toArray();
+      res.send(result);
+    })
+    app.get('/instructors', async (req, res) => {
+      // const result = await instructorsCollection.find().toArray();
+      const result = await instructorsCollection.find().toArray();
       res.send(result);
     })
 
