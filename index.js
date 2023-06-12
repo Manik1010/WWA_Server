@@ -84,7 +84,7 @@ async function run() {
       }
 
     })
-    app.get('/courses/:id', async (req, res) => {
+    app.get('/course/:id', async (req, res) => {
       const id = req.params.id;
       const quary = { _id: new ObjectId(id) }
       // console.log(id);
@@ -315,18 +315,31 @@ async function run() {
     // security layer: verifyJWT
     // email same
     // check admin
-    // app.get('/users/admin/:email', verifyJWT, async (req, res) => {
-    //   const email = req.params.email;
+    app.get('/users/admin/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email;
 
-    //   if (req.decoded.email !== email) {
-    //     res.send({ admin: false })
-    //   }
+      if (req.decoded.email !== email) {
+        res.send({ admin: false })
+      }
 
-    //   const query = { email: email }
-    //   const user = await userCollection.findOne(query);
-    //   const result = { admin: user?.role === 'admin' }
-    //   res.send(result);
-    // })
+      const query = { email: email }
+      const user = await userCollection.findOne(query);
+      const result = { admin: user?.role === 'Admin' }
+      res.send(result);
+    })
+    app.get('/users/instructor/:email', verifyJWT,  async (req, res) => {
+      const email = req.params.email;
+
+      if (req.decoded.email !== email) {
+        res.send({ admin: false })
+      }
+
+      const query = { email: email }
+      const user = await userCollection.findOne(query);
+      const result = { admin: user?.role === 'Instructor' }
+      res.send(result);
+    })
+
     // Define the route to handle the PATCH request
     app.patch('/users/:id', async (req, res) => {
       const { id } = req.params;
