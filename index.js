@@ -99,43 +99,7 @@ async function run() {
       const selectedCoures = await coursesCollection.findOne(quary);
       res.send(selectedCoures);
     })
-    // app.get('/courses', async (req, res) => {
-    //   const id = req.query.id;
-    //   console.log(id)
-    //   // const email = req.query.email;
-    //   // if (id) {
-    //   //   const query = { _id: id }
-    //   //   const result = await coursesCollection.find(query).toArray();
-    //   //   res.send(result);
-    //   // }
-    //   // if (email) {
-    //   //   const query = { email: email }
-    //   //   const result = await coursesCollection.find(query).toArray();
-    //   //   res.send(result);
-    //   // }
-
-    //   const query = { _id: id }
-    //   const result = await coursesCollection.find(query).toArray();
-    //   res.send(result);
-
-    // })
-    // app.get('/courses', verifyJWT, async (req, res) => {
-    //   const email = req.query.email;
-    //   // console.log(email)
-    //   if (!email) {
-    //     res.send([]);
-    //   }
-
-    //   // verify...
-    //   const decodedEmail = req.decoded.email
-    //   if (email !== decodedEmail) {
-    //     return res.status(403).send({ error: true, message: 'Porviden access' })
-    //   }
-
-    //   const query = { email: email }
-    //   const result = await coursesCollection.find(query).toArray();
-    //   res.send(result);
-    // })
+    
     app.post('/courses', async (req, res) => {
       const newItem = req.body;
       // console.log(newItem)
@@ -203,24 +167,7 @@ async function run() {
         res.status(500).json({ error: 'Internal Server Error' });
       }
     });
-    // app.get('/bookings', async (req, res) => {
-    //   const email = req.query.email;
-    //   // console.log(email)
-    //   if (!email) {
-    //     res.send([]);
-    //   }
-    //   const query = { bookerEmail: email }
-    //   const result = await bookingCollection.find(query).toArray();
-    //   res.send(result);
-    // })
 
-    // app.get('/bookings/:id', async (req, res) => {
-    //   const id = req.params.id;
-    //   const quary = { _id: new ObjectId(id) }
-    //   console.log(id);
-    //   const selectedCoures = await bookingCollection.findOne(quary);
-    //   res.send(selectedCoures);
-    // })
     
     app.post('/bookings', async (req, res) => {
       const item = req.body;
@@ -265,43 +212,6 @@ async function run() {
     })
 
 
-    // app.post('/payments', verifyJWT, async (req, res) => {
-    //   const payment = req.body;
-    //   const insertResult = await paymentCollection.insertOne(payment);
-
-    //   const query = { _id: new ObjectId(payment.selectedClassId) };
-    //   const deleteResult = await selectedclassCollection.deleteOne(query);
-
-    //   const filter = { _id: new ObjectId(payment.classId) };
-    //   const classDoc = await classCollection.findOne(filter);
-
-    //   if (!classDoc) {
-    //     res.status(404).send('Class not found');
-    //     return;
-    //   }
-
-    //   const seats = classDoc.seats;
-    //   const totalEnrolled = classDoc.totalEnrolled;
-
-    //   if (seats <= 0) {
-    //     res.status(400).send('No available seats');
-    //     return;
-    //   }
-
-    //   const updatedSeats = seats - 1;
-    //   const updatedTotalEnrolled = totalEnrolled + 1;
-
-    //   const updatedDoc = {
-    //     $set: {
-    //       seats: updatedSeats,
-    //       totalEnrolled: updatedTotalEnrolled
-    //     }
-    //   };
-
-    //   const updateResult = await classCollection.updateOne(filter, updatedDoc);
-
-    //   res.send({ insertResult, deleteResult, updateResult });
-    // });
 
     // Instructors related apis................................
 
