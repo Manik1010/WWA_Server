@@ -8,7 +8,14 @@ const { ObjectId } = require('mongodb');
 const stripe = require('stripe')(process.env.PAYMENT_SECRET_KEY);
 
 // middleware.....
-app.use(cors());
+// app.use(cors());
+const corsOptions ={
+  origin:'*', 
+  credentials:true,
+  optionSuccessStatus:200,
+}
+
+app.use(cors(corsOptions))
 app.use(express.json());
 
 const verifyJWT = (req, res, next) => {
@@ -147,25 +154,18 @@ async function run() {
     app.get('/bookings', async (req, res) => {
       const email = req.query.email;
       const id = req.query.id;
-      // console.log(id);
-    
-      try {
-        if (email) {
-          const query = { bookerEmail: email };
-          const result = await bookingCollection.find(query).toArray();
-          res.send(result);
-        } else if (id) {
-          const query = { email: email }
-          // const query = { _id: new ObjectId(id) };
-          const result = await bookingCollection.find(query).toArray();
-          res.send(result);
-        } else {
-          res.status(400).json({ error: 'Invalid request' });
-        }
-      } catch (error) {
-        console.error('Error occurred:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+      console.log(id);
+      if (email) {
+        const query = { bookerEmail: email };
+        const result = await bookingCollection.find(query).toArray();
+        res.send(result);
+      } else if (id) {
+        const query = { _id: new ObjectId(id) };
+        // const result = await bookingCollection.find(query).toArray();
+        const result = await bookingCollection.findOne(query)
+        res.send(result);
       }
+
     });
 
     
@@ -203,9 +203,13 @@ async function run() {
     app.post('/payments', async (req, res) => {
       const payment = req.body;
       const insertResult = await paymentCollection.insertOne(payment);
+      const id = payment.bookingItems
+      // console.log(id);
 
-      const query = { _id: { $in: payment.bookingItems.map(id => new ObjectId(id)) } }
-      const deleteResult = await bookingCollection.deleteMany(query)
+      // const query = { _id: { $in: payment.bookingItems.map(id => new ObjectId(id)) } }
+      // const deleteResult = await bookingCollection.deleteMany(query)
+      const query = { _id: new ObjectId(id) };
+      const deleteResult = await bookingCollection.deleteOne(query)
 
       res.send({ insertResult, deleteResult });
       // res.send(insertResult)
@@ -281,24 +285,24 @@ async function run() {
     // security layer: verifyJWT
     // email same
     // check admin
-    app.get('/users/admin/:email', verifyJWT, async (req, res) => {
+    app.get('/users/admin/:email', async (req, res) => {
       const email = req.params.email;
 
-      if (req.decoded.email !== email) {
-        res.send({ admin: false })
-      }
+      // if (req.decoded.email !== email) {
+      //   res.send({ admin: false })
+      // }
 
       const query = { email: email }
       const user = await userCollection.findOne(query);
       const result = { admin: user?.role === 'Admin' }
       res.send(result);
     })
-    app.get('/users/instructor/:email', verifyJWT,  async (req, res) => {
+    app.get('/users/instructor/:email',  async (req, res) => {
       const email = req.params.email;
 
-      if (req.decoded.email !== email) {
-        res.send({ admin: false })
-      }
+      // if (req.decoded.email !== email) {
+      //   res.send({ admin: false })
+      // }
 
       const query = { email: email }
       const user = await userCollection.findOne(query);
