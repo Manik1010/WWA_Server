@@ -361,6 +361,42 @@ async function run() {
 
 
 
+    app.get('/admin-stats', async (req, res) => {
+      const users = await userCollection.estimatedDocumentCount();
+      const courses = await coursesCollection.estimatedDocumentCount();
+      const instectors = await instructorsCollection.estimatedDocumentCount();
+
+      const payments = await paymentCollection.find().toArray();
+      const revenue = payments.reduce( ( sum, payment) => sum + payment.price, 0)
+
+      res.send({
+        revenue,
+        users,
+        courses,
+        instectors,
+      })
+    })
+    app.get('/courses/groupByEmail', async (req, res) => {
+
+      const aggregationResult = await coursesCollection.aggregate([
+        {
+          $group: {
+            _id: '$email',
+            courseCount: { $sum: 1 },
+            courses: {
+              $push: {
+                course_name: '$course_name',
+                enrollment_date: '$enrollment_date',
+              },
+            },
+          },
+        },
+      ]).toArray();
+
+      res.json(aggregationResult);
+
+    })
+
     //All Delete API is here................................. ................. 
 
     app.delete('/users/:id', async (req, res) => {
